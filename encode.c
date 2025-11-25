@@ -12,27 +12,73 @@ size_t encode(FEC _fec, uint8_t *msg, size_t sz_msg, uint8_t *enc_msg)
 
     unsigned int state_reg = 0;
     unsigned int full_state = pow(2,_fec.cl-1) - 1;
-    printf("\nfull state : %x", full_state);
 
-    for(size_t i = 0; i < sz_msg; i++)
+    if(_fec.enable_fulltail_biting)
     {
-        state_reg = state_reg & full_state;
-        state_reg = state_reg | (msg[i] << (_fec.cl-1));
+        uint8_t temp[20] = {0};
+        for(size_t i = 0; i < (_fec.cl-1); i++)
+        {
+            temp[i]=msg[i];
+            state_reg = (state_reg & full_state);
+            state_reg = state_reg | ((msg[i])<< (_fec.cl-1));
+            state_reg = state_reg>>1;
+        }
 
-        unsigned int ones_cnt = 0;
-        uint8_t G0 = 0, G1 = 0;
-        ones_cnt = __builtin_popcount(state_reg & _fec.msb);
-        G1 = (bool)(ones_cnt % 2);
-        ones_cnt = __builtin_popcount(state_reg & _fec.lsb);
-        G0 = (bool)(ones_cnt % 2);
+        for(size_t i = (_fec.cl-1); i < sz_msg; i++)
+        {
+            state_reg = state_reg & full_state;
+            state_reg = state_reg | (msg[i] << (_fec.cl-1));
 
-        enc_msg[sz_enc++] = G1;
-        enc_msg[sz_enc++] = G0;
+            unsigned int ones_cnt = 0;
+            uint8_t G0 = 0, G1 = 0;
+            ones_cnt = __builtin_popcount(state_reg & _fec.msb);
+            G1 = ones_cnt % 2;
+            ones_cnt = __builtin_popcount(state_reg & _fec.lsb);
+            G0 = ones_cnt % 2;
 
-        state_reg = state_reg >> 1;
-        // printf("\nstate : %d, msg : %d", state_reg, msg[i]);
-        // printf("\nmsb = %d, lsb = %d", enc_msg[sz_enc-2], enc_msg[sz_enc-1]);
+            enc_msg[sz_enc++] = G1;
+            enc_msg[sz_enc++] = G0;
 
+            state_reg = state_reg >> 1;
+        }
+
+        for(size_t i = 0; i < (_fec.cl-1); i++)
+        {
+            state_reg = state_reg & full_state;
+            state_reg = state_reg | (temp[i] << (_fec.cl-1));
+
+            unsigned int ones_cnt = 0;
+            uint8_t G0 = 0, G1 = 0;
+            ones_cnt = __builtin_popcount(state_reg & _fec.msb);
+            G1 = ones_cnt % 2;
+            ones_cnt = __builtin_popcount(state_reg & _fec.lsb);
+            G0 = ones_cnt % 2;
+
+            enc_msg[sz_enc++] = G1;
+            enc_msg[sz_enc++] = G0;
+
+            state_reg = state_reg >> 1;
+        }
+    }
+    else
+    {
+        for(size_t i = 0; i < sz_msg; i++)
+        {
+            state_reg = state_reg & full_state;
+            state_reg = state_reg | (msg[i] << (_fec.cl-1));
+
+            unsigned int ones_cnt = 0;
+            uint8_t G0 = 0, G1 = 0;
+            ones_cnt = __builtin_popcount(state_reg & _fec.msb);
+            G1 = ones_cnt % 2;
+            ones_cnt = __builtin_popcount(state_reg & _fec.lsb);
+            G0 = ones_cnt % 2;
+
+            enc_msg[sz_enc++] = G1;
+            enc_msg[sz_enc++] = G0;
+
+            state_reg = state_reg >> 1;
+        }
     }
 
     return sz_enc;

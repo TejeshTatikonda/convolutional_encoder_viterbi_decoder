@@ -26,7 +26,18 @@ int main()
     {
         int x = rand_range(0, 1);   // random int from 10 to 20
         msg[i] = (bool)x;
+        // msg[i] = (bool)1;
     }
+
+    print_array(msg, sz_msg, "raw msg");
+
+    sz_enc = encode(_fec, msg, sz_msg, enc);
+
+    print_array(enc, sz_enc, "encoded data");
+
+    _fec = init_fec(7, 0133, 0171, 0, punc, sz_punc, true);
+
+    print_fec(_fec);
 
     print_array(msg, sz_msg, "raw msg");
 

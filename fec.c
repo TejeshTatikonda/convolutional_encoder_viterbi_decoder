@@ -55,4 +55,5 @@ void print_array(uint8_t *a, size_t b, const char *c)
         printf("\n");
         printf("%d ", a[i]);
     }
+    printf("\n");
 }
