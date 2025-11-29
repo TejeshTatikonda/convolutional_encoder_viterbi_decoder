@@ -8,6 +8,7 @@
 #include <math.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <limits.h>
 
 
 typedef struct trellis{
@@ -55,5 +56,13 @@ void print_array(uint8_t *, size_t , const char *);
 /// @param  
 /// @return 
 size_t encode(FEC , uint8_t *, size_t , uint8_t *);
+
+/// @brief decodes the data using viterbi algorithm as pwe specified FEC configuration.
+/// @param  
+/// @param  
+/// @param  
+/// @param  
+/// @return 
+size_t decode(FEC , uint8_t *, size_t , uint8_t *);
 
 #endif

@@ -5,6 +5,7 @@ project(FEC_ENC_DEC)
 set(SOURCES
     fec.c
     encode.c
+    decode.c
 )
 
 add_library(fec_lib STATIC ${SOURCES})
