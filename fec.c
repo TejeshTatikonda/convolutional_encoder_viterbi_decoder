@@ -23,6 +23,12 @@ FEC init_fec(unsigned int cl, unsigned int msb, unsigned int lsb, unsigned int n
 
     memcpy(a.puncturing_pattern, punc_pat, sz_punc_pat);
 
+    a.ones_cnt_punc_pat = 0;
+    for(int i = 0; i < a.sz_puncturing_pattern; i++)
+    {
+        a.ones_cnt_punc_pat += a.puncturing_pattern[i];
+    }
+
     a.enable_fulltail_biting = enable_fulltail_biting;
 
     return a;
@@ -36,7 +42,8 @@ void print_fec(FEC _fec)
     {
         printf("%d ", _fec.puncturing_pattern[i]);
     }
-    printf("]\n");
+    printf("] -> one's count : %d\n", _fec.ones_cnt_punc_pat);
+    printf("pattern size : %d\n", _fec.sz_puncturing_pattern);
 }
 
 void print_array(uint8_t *a, size_t b, const char *c)

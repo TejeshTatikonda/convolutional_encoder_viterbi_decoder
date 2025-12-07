@@ -3,8 +3,6 @@
 
 typedef struct node_info{
     unsigned int cur_state; // current state
-    unsigned int next_state_through_0; // if we give 0 as input to current node, next state would be in this variable
-    unsigned int next_state_through_1; // if we give 1 as input to current node, next state would be in this variable
     int error_at_cur_node; // latest and shortest error at current node will be in this node.
     unsigned int prev_node_for_error_at_cur_node; // the previous node which caused the error at this node.
     unsigned int input_to_prev_node; // input given to previous node to reach current node.
@@ -23,7 +21,7 @@ NODE_INFO *createNodeInfo2D(int rows, int cols);
 /// @param sz_enc_msg encoded message size
 /// @param dec_msg decoded message
 /// @return returns decoded message size
-size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg);
+size_t perform_viterbi(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg);
 
 /// @brief prints the branch metrics table (for fast debugging purpose)
 /// @param metrics 
@@ -43,17 +41,66 @@ unsigned int calculate_next_state(FEC _fec, unsigned int cur_state, unsigned int
 /// @param ref_lsb 
 /// @param msb 
 /// @param lsb 
+/// @param msb_punc 
+/// @param lsb_punc 
 /// @return 
-unsigned int calculate_distance(FEC _fec, uint8_t ref_msb, uint8_t ref_lsb, uint8_t msb, uint8_t lsb);
+unsigned int calculate_distance(FEC _fec, uint8_t ref_msb, uint8_t ref_lsb, uint8_t msb, uint8_t lsb, uint8_t msb_punc, uint8_t lsb_punc);
 
+/// @brief depunctures the punctured data. (inserts 0 at the punctured positions)
+/// @param _fec 
+/// @param enc_msg 
+/// @param sz_enc_msg 
+/// @param depunctured 
+/// @return 
+size_t depuncture(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *depunctured);
 
+/// @brief decodes the encoded data.
+/// @param _fec 
+/// @param enc_msg 
+/// @param sz_enc_msg 
+/// @param dec_msg 
+/// @return 
+size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg);
 
 size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
 {
-    size_t sz_dec = 0;
+    // handling error cases for enc msg size.
     if(sz_enc_msg <= 0)
     {
         printf("\n[%s][%d]: invalid input size(%d) to decode\n", CUR_FILE, __LINE__, sz_enc_msg);
+        return 0;
+    }
+    if(sz_enc_msg % _fec.ones_cnt_punc_pat != 0)
+    {
+        printf("\ninvalid input size to decoder function : %d expected %d\n", sz_enc_msg, ceil(sz_enc_msg / (float)_fec.ones_cnt_punc_pat)*_fec.ones_cnt_punc_pat);
+        return 0;
+    }
+
+    uint8_t *depunctured = calloc(sz_enc_msg*2, sizeof(enc_msg[0]));
+    size_t sz_depunctured = 0;
+    sz_depunctured = depuncture(_fec, enc_msg, sz_enc_msg, depunctured);
+
+    print_array(depunctured, sz_depunctured, "depunctured data : ");
+
+    size_t sz_decoded = perform_viterbi(_fec, depunctured, sz_depunctured, dec_msg);
+
+    free(depunctured);
+    return sz_decoded;
+}
+
+size_t perform_viterbi(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
+{
+    size_t sz_dec = 0;
+
+    // handling error cases for enc msg size.
+    if(sz_enc_msg <= 0)
+    {
+        printf("\n[%s][%d]: invalid input size(%d) to decode\n", CUR_FILE, __LINE__, sz_enc_msg);
+        return 0;
+    }
+    if(sz_enc_msg % _fec.ones_cnt_punc_pat != 0)
+    {
+        printf("\ninvalid input size to decoder function : %d expected %d\n", sz_enc_msg, ceil(sz_enc_msg / (float)_fec.ones_cnt_punc_pat)*_fec.ones_cnt_punc_pat);
         return 0;
     }
 
@@ -75,8 +122,6 @@ size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
             unsigned int metric_idx = i*cols + j;
 
             metrics[metric_idx].cur_state = 0;
-            metrics[metric_idx].next_state_through_0 = 0;
-            metrics[metric_idx].next_state_through_1 = 0;
             metrics[metric_idx].error_at_cur_node = inf;
             
             metrics[i*cols].error_at_cur_node = 0;
@@ -86,17 +131,24 @@ size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
 
     // print_metrics(metrics, rows, cols);
 
-    // TODO handle error cases for enc msg size.
-
     uint8_t enc_msb = 0, enc_lsb = 0;
     unsigned int enc_msg_idx = 0;
+    uint8_t msb_punc = 0, lsb_punc = 0;
 
     // printf("\ndecoder metrics table size : (%d,%d)\n", rows,cols);
     printf("\nsizeof branch metrics = %lld bytes\n", sizeof(metrics)*rows*cols);
+    unsigned int punc_cnt = 0;
     for(unsigned int j = 0; j < cols-1; j++)
     {
         enc_msb = enc_msg[enc_msg_idx++];
         enc_lsb = enc_msg[enc_msg_idx++];
+
+        msb_punc = _fec.puncturing_pattern[punc_cnt % _fec.sz_puncturing_pattern];
+        punc_cnt++;
+        lsb_punc = _fec.puncturing_pattern[punc_cnt % _fec.sz_puncturing_pattern];
+        punc_cnt++;
+
+        // printf("\npunc %d %d\n", msb_punc, lsb_punc);
      
         for(unsigned int i = 0; i < rows; i++)
         {
@@ -128,7 +180,7 @@ size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
             G0 = ones_cnt % 2;
 
             // error at next node due to this input at current node.
-            inst_error_at_next_node = calculate_distance(_fec, G1, G0, enc_msb, enc_lsb);
+            inst_error_at_next_node = calculate_distance(_fec, G1, G0, enc_msb, enc_lsb, msb_punc, lsb_punc);
 
             next_state = calculate_next_state(_fec, cur_state, input_bit);
             // printf(" next state : %d", next_state);
@@ -167,7 +219,7 @@ size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
             G0 = ones_cnt % 2;
 
             // error at next node due to this input at current node.
-            inst_error_at_next_node = calculate_distance(_fec, G1, G0, enc_msb, enc_lsb);
+            inst_error_at_next_node = calculate_distance(_fec, G1, G0, enc_msb, enc_lsb, msb_punc, lsb_punc);
 
             next_state = calculate_next_state(_fec, cur_state, input_bit);
             // printf(" next state : %d", next_state);
@@ -266,10 +318,58 @@ unsigned int calculate_next_state(FEC _fec, unsigned int cur_state, unsigned int
     return ((cur_state & full_state) | (input << (_fec.cl-1))) >> 1;
 }
 
-unsigned int calculate_distance(FEC _fec, uint8_t ref_msb, uint8_t ref_lsb, uint8_t msb, uint8_t lsb)
+unsigned int calculate_distance(FEC _fec, uint8_t ref_msb, uint8_t ref_lsb, uint8_t msb, uint8_t lsb, uint8_t msb_punc, uint8_t lsb_punc)
 {
     unsigned int error = 0;
-    error = error +  ((ref_lsb == lsb) ? 0 : 1);
-    error = error +  ((ref_msb == msb) ? 0 : 1);
+    // error = error +  ((ref_lsb == lsb) ? 0 : 1);
+    // error = error +  ((ref_msb == msb) ? 0 : 1);
+    // return error;
+
+    if(lsb_punc == 1)
+    {
+        error = error +  ((ref_lsb == lsb) ? 0 : 1);
+    }
+    if(msb_punc == 1)
+    {
+        error = error +  ((ref_msb == msb) ? 0 : 1);
+    }
     return error;
+}
+
+size_t depuncture(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *depunctured)
+{
+    
+    if(sz_enc_msg % _fec.ones_cnt_punc_pat != 0)
+    {
+        printf("\ninvalid input size to depuncture : %d expected %d\n", sz_enc_msg, ceil(sz_enc_msg / (float)_fec.ones_cnt_punc_pat)*_fec.ones_cnt_punc_pat);
+        return 0;
+    }
+    
+    size_t sz_depunctured = 0;
+    // uint8_t *tmp = calloc(sz_enc_msg*2, sizeof(enc_msg[0]));
+
+    // printf("\ndebug depuncture : \n");
+    for(int i = 0; i < sz_enc_msg; )
+    {
+        for(int j = 0; j < _fec.sz_puncturing_pattern; j++)
+        {
+            bool puncture = _fec.puncturing_pattern[j];
+
+            if(puncture == 0)
+            {
+                depunctured[sz_depunctured] = 0;
+            }
+            else{
+                depunctured[sz_depunctured] = enc_msg[i];
+                // printf("%d ", enc_msg[i]);
+                i++;
+            }
+
+            // printf("%d ", depunctured[sz_depunctured]);
+
+            sz_depunctured++;
+        }
+    }
+
+    return sz_depunctured;
 }

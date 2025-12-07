@@ -23,6 +23,8 @@ typedef struct trellis{
 
     size_t sz_puncturing_pattern; // puncturing pattern size.
 
+    size_t ones_cnt_punc_pat; // ones count in the puncturing sequence.
+
     bool enable_fulltail_biting; // if true, last (cl-1) bits will be loaded into the encoder state register 
                                 // and then starts encoding.
 

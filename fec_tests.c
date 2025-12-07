@@ -32,6 +32,9 @@ int main()
     bool punc[10] = {1,1,1,0,0,1};
     size_t sz_punc = 6;
 
+    // bool punc[10] = {1,1,1,0};
+    // size_t sz_punc = 4;
+
     for(size_t i = 0; i < sz_msg; i++)
     {
         int x = rand_range(0, 1);   // random int from 10 to 20
@@ -44,21 +47,21 @@ int main()
     FEC _fec = init_fec(7, 0133, 0171, 0, punc, sz_punc, false);
     print_fec(_fec);
 
-    // print_array(msg, sz_msg, "raw msg");
-
+    
     printf("\nraw msg size : %lld bits\n", sz_msg);
+    print_array(msg, sz_msg, "raw msg");
 
     sz_enc = encode(_fec, msg, sz_msg, enc);
 
     // adding 1 error manually.
-    // enc[0] = !enc[0];
+    // enc[1] = !enc[1];
 
     // print_array(enc, sz_enc, "encoded data");
 
     sz_dec = decode(_fec, enc, sz_enc, dec);
     printf("\ndecoded msg size : %lld bits\n", sz_dec);
 
-    // print_array(dec, sz_dec, "decoded msg : ");
+    print_array(dec, sz_dec, "decoded msg : ");
 
     validate_data(msg, sz_msg, dec, sz_dec);
 
