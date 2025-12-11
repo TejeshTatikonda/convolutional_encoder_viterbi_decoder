@@ -253,7 +253,7 @@ int main()
 
     
     printf("\nraw msg size : %lld bits\n", sz_msg);
-    print_array(msg, sz_msg, "raw msg");
+    // print_array(msg, sz_msg, "raw msg");
 
     sz_enc = encode(_fec, msg, sz_msg, enc);
 
@@ -262,12 +262,12 @@ int main()
     // adding 1 error manually.
     // enc[1] = !enc[1];
 
-    print_array(enc, sz_enc, "encoded data");
+    // print_array(enc, sz_enc, "encoded data");
 
     sz_dec = decode(_fec, enc, sz_enc, dec);
     printf("\ndecoded msg size : %lld bits\n", sz_dec);
 
-    print_array(dec, sz_dec, "decoded msg : ");
+    // print_array(dec, sz_dec, "decoded msg : ");
 
     validate_data(msg, sz_msg, dec, sz_dec);
 

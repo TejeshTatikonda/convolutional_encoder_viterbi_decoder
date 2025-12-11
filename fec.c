@@ -50,7 +50,6 @@ void print_fec(FEC _fec)
 void print_array(uint8_t *a, size_t b, const char *c)
 {
     printf("\n%s : (%d)\n", c, b);
-    return;
     for(int i = 0; i < b; i++){
         if(i%32 == 0)
         printf("\n");

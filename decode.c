@@ -86,21 +86,21 @@ size_t decode(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *dec_msg)
         return 0;
     }
 
-    print_array(enc_msg, sz_enc_msg, "encoded data to decode ");
+    // print_array(enc_msg, sz_enc_msg, "encoded data to decode ");
     
     uint8_t *depunctured = calloc(sz_enc_msg*2, sizeof(enc_msg[0]));
     size_t sz_depunctured = 0;
     sz_depunctured = depuncture(_fec, enc_msg, sz_enc_msg, depunctured);
 
-    printf("\nsz_depunctured : %d\n", sz_depunctured);
+    // printf("\nsz_depunctured : %d\n", sz_depunctured);
 
-    print_array(depunctured, sz_depunctured, "depunctured data ");
+    // print_array(depunctured, sz_depunctured, "depunctured data ");
 
     uint8_t *n_removed = calloc(sz_enc_msg*2, sizeof(enc_msg[0]));
     size_t sz_n_removed = 0;
     sz_n_removed = n_repeats_remover(_fec, depunctured, sz_depunctured, n_removed);
 
-    print_array(n_removed, sz_n_removed, "removed repeated enc msg");    
+    // print_array(n_removed, sz_n_removed, "removed repeated enc msg");    
 
     size_t sz_decoded = perform_viterbi(_fec, n_removed, sz_n_removed, dec_msg);
 
@@ -153,7 +153,7 @@ size_t perform_viterbi(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *d
     uint8_t msb_punc = 0, lsb_punc = 0;
 
     // printf("\ndecoder metrics table size : (%d,%d)\n", rows,cols);
-    printf("\nsizeof branch metrics = %lld bytes\n", sizeof(metrics)*rows*cols);
+    // printf("\nsizeof branch metrics = %lld bytes\n", sizeof(metrics)*rows*cols);
     unsigned int punc_cnt = 0;
     for(unsigned int j = 0; j < cols-1; j++)
     {
@@ -269,7 +269,7 @@ size_t perform_viterbi(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *d
 
     unsigned int min_distance = inf;
     unsigned int min_idx = 0;
-    printf("\nlast stage metrics :");
+    // printf("\nlast stage metrics :");
     for(int i = 0; i < rows; i++)
     {
         unsigned int idx = i*cols + (cols-1);
@@ -280,7 +280,7 @@ size_t perform_viterbi(FEC _fec, uint8_t *enc_msg, size_t sz_enc_msg, uint8_t *d
         }
     }
 
-    printf("%d error(s) detected at idx %d ", min_distance, min_idx);
+    // printf("%d error(s) detected at idx %d ", min_distance, min_idx);
 
     sz_dec = 0;
     for(int i = cols-1; i > 0; i--)

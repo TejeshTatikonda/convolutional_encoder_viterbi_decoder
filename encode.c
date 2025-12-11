@@ -91,7 +91,7 @@ size_t encode(FEC _fec, uint8_t *msg, size_t sz_msg, uint8_t *enc_msg)
         }
     }
 
-    print_array(enc_half_rate, sz_enc_half_rate, "encoded msg");    
+    // print_array(enc_half_rate, sz_enc_half_rate, "encoded msg");    
 
     uint8_t *repeated = NULL;
     size_t sz_repeated = 0;
@@ -119,7 +119,7 @@ size_t encode(FEC _fec, uint8_t *msg, size_t sz_msg, uint8_t *enc_msg)
         assert(false);
     }
 
-    print_array(repeated, sz_repeated, "repeated enc msg");    
+    // print_array(repeated, sz_repeated, "repeated enc msg");    
 
     uint8_t *punctured = NULL;
     punctured = calloc(sz_repeated, sizeof(repeated[0]));
@@ -153,7 +153,6 @@ size_t encode(FEC _fec, uint8_t *msg, size_t sz_msg, uint8_t *enc_msg)
     free(punctured);
     free(enc_half_rate);
     
-    // print_array(enc_msg, sz_enc, "enc msg inside");    
-    print_array(enc_msg, sz_enc, "punctured msg");
+    // print_array(enc_msg, sz_enc, "punctured msg");
     return sz_enc;
 }
